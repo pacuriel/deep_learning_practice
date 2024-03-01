@@ -40,12 +40,57 @@ train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=
 test_dataset = datasets.MNIST(root='dataset/', train=False, transform=transforms.ToTensor(), download=True) #will download if we don't already have it
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
-###left off ~9:30
-
 #initialize network
+model = NN(input_size=input_size, num_classes=num_classes).to(device)
 
 #loss and optimizer
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
 #train network
+for epoch in range(num_epochs): #one epoch = NN has seen all images
+    for batch_idx, (data, targets) in enumerate(train_loader): #data = image, target = label
+        #move data/targets to device
+        data = data.to(device=device)
+        targets = targets.to(device=device)
 
+        data = data.reshape(data.shape[0], -1) #reshape data to single column
+        # print(data.shape) #sanity check
+
+        #forward pass
+        scores = model(data)
+        loss = criterion(scores, targets)
+
+        #backward pass (backprop)
+        optimizer.zero_grad() #set gradients to zero initially
+        loss.backward() #update weights depending on gradients computed above
+
+        #gradient descent (or adam step)
+        optimizer.step()
+        
 #check accuracy on training and test data
+def check_accuracy(loader, model):
+    if loader.dataset.train: k
+
+    num_correct = 0
+    num_samples = 0
+    model.eval() #set model to evaluation mode
+
+    with torch.no_grad():
+        for x, y in loader:
+            x = x.to(device=device)
+            y = y.to(device=device)
+            x = x.reshape(x.shape[0], -1)
+
+            scores = model(x)
+            _, predictions = scores.max(1)
+            num_correct += (predictions == y).sum()
+            num_samples += predictions.size(0)
+
+        print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples)*100:.2f}')
+
+    model.train() #set model back to training mode
+    return acc 
+
+check_accuracy(train_loader, model)
+check_accuracy(test_loader, model)
