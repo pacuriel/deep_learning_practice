@@ -70,7 +70,10 @@ for epoch in range(num_epochs): #one epoch = NN has seen all images
         
 #check accuracy on training and test data
 def check_accuracy(loader, model):
-    if loader.dataset.train: k
+    if loader.dataset.train: 
+        print("Checking accuracy on training data")
+    else:
+        print("Checking accuracy on test data")
 
     num_correct = 0
     num_samples = 0
@@ -88,6 +91,7 @@ def check_accuracy(loader, model):
             num_samples += predictions.size(0)
 
         print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples)*100:.2f}')
+        acc = float(num_correct) / float(num_samples) #accuracy
 
     model.train() #set model back to training mode
     return acc 
