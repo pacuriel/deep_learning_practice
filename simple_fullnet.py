@@ -50,6 +50,7 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 #train network
 for epoch in range(num_epochs): #one epoch = NN has seen all images
     for batch_idx, (data, targets) in enumerate(train_loader): #data = image, target = label
+        print(f"Training on batch {batch_idx}")
         #move data/targets to device
         data = data.to(device=device)
         targets = targets.to(device=device)
@@ -68,15 +69,16 @@ for epoch in range(num_epochs): #one epoch = NN has seen all images
         #gradient descent (or adam step)
         optimizer.step()
         
+        
 #check accuracy on training and test data
 def check_accuracy(loader, model):
     if loader.dataset.train: 
         print("Checking accuracy on training data")
-    else:
+    else:   
         print("Checking accuracy on test data")
 
-    num_correct = 0
-    num_samples = 0
+    num_correct = 0 
+    num_samples = 0 
     model.eval() #set model to evaluation mode
 
     with torch.no_grad():
@@ -91,10 +93,10 @@ def check_accuracy(loader, model):
             num_samples += predictions.size(0)
 
         print(f'Got {num_correct} / {num_samples} with accuracy {float(num_correct) / float(num_samples)*100:.2f}')
-        acc = float(num_correct) / float(num_samples) #accuracy
+        # acc = float(num_correct) / float(num_samples) #accuracy
 
     model.train() #set model back to training mode
-    return acc 
+    # return acc 
 
 check_accuracy(train_loader, model)
 check_accuracy(test_loader, model)
