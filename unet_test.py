@@ -42,9 +42,20 @@ class UNET(nn.Module):
         #Note: will be using transpose convolutions for upsampling
         for feature in reversed(features):
             self.ups.append(
-                nn.ConvTranspose2d()
-            )
+                nn.ConvTranspose2d(
+                    in_channels=2*feature, out_channels=feature, kernel_size=2, stride=2)
+            )#append
+            self.ups.append(DoubleConv(in_channels=2*feature, out_channels=feature))
 
+        #bottleneck layer (bottom of architecture diagram)
+        self.bottleneck = DoubleConv(in_channels=features[-1], out_channels=2*features[-1])
+
+        #final conv layer
+        self.final_conv = nn.Conv2d(in_channels=features[0], out_channels=out_channels, kernel_size=1) 
+
+    def forward(self, x): 
+        skip_connections = []
+        
 
 
 
