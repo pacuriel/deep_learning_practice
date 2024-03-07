@@ -45,6 +45,25 @@ class RNN(nn.Module):
         out = out.reshape(out.shape[0], -1)
         out = self.fc(out)
         return out
+    
+#create a GRU (basically same code as RNN)
+class GRU(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, num_classes):
+        super(GRU, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.gru = nn.GRU(input_size, hidden_size, num_layers, batch_first=True)
+        #batch_size*time_seq*features
+        self.fc = nn.Linear(hidden_size*sequence_length, num_classes)
+
+    def forward(self, x):
+        h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(device)
+
+        #forward prop
+        out, _ = self.gru(x, h0)
+        out = out.reshape(out.shape[0], -1)
+        out = self.fc(out)
+        return out
 
 #load data
 train_dataset = datasets.MNIST(root='dataset/', train=True, transform=transforms.ToTensor(), download=True) #will download if we don't already have it
