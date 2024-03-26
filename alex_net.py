@@ -1,5 +1,5 @@
-###Implementing a modified version of the classic LeNet-5 (1998) model 
-###and applying it to FashionMNIST dataset.
+###Implementing a version of the AlexNet (2012) model applied to the Imagenette dataset (subset of ImageNet)
+
 #importing packages
 import torch #entire Pytorch library
 import torch.nn as nn #NN modules 
@@ -9,58 +9,76 @@ from torch.utils.data import DataLoader #helps with dataset management
 import torchvision.datasets as datasets #include built-in datasets (MNIST, etc.)
 import torchvision.transforms as transforms #used for data transormations
 
-#defining LeNet model
-class LeNet(nn.Module):
-    #in_channels=1 bc grayscale/binary images
-    def __init__(self, in_channels=1, num_classes=10):
-        super(LeNet, self).__init__()
+#defining AlexNet model
+class AlexNet(nn.Module):
+    #in_channels=3 bc RGB images
+    def __init__(self, in_channels=3, num_classes=1000):
+        super(AlexNet, self).__init__()
+        self.pool = nn.MaxPool2d(kernel_size=(3,3), stride=2) #pooling layer
+        self.dropout = nn.Dropout(p=0.5) #dropout layer
         #first conv layer
-        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=6, kernel_size=(5,5), stride=1, padding=2)
-        self.pool = nn.AvgPool2d(kernel_size=(2,2), stride=2) #pooling layer
+        self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=96, kernel_size=(11,11), stride=4, padding=1)
         #second conv layer
-        self.conv2 = nn.Conv2d(in_channels=6, out_channels=16, kernel_size=(5,5), stride=1)
+        self.conv2 = nn.Conv2d(in_channels=96, out_channels=256, kernel_size=(5,5), stride=1, padding=2)
+        #third conv layer
+        self.conv3 = nn.Conv2d(in_channels=256, out_channels=384, kernel_size=(3,3), stride=1, padding=1)
+        #fourth conv layer
+        self.conv4 = nn.Conv2d(in_channels=384, out_channels=384, kernel_size=(3,3), stride=1, padding=1)
+        #fifth conv layer
+        self.conv5 = nn.Conv2d(in_channels=384, out_channels=256, kernel_size=(3,3), stride=1, padding=1)
+        
         #FC layers
-        self.fc1 = nn.Linear(in_features=16*5*5, out_features=120) #first FC layer
-        self.fc2 = nn.Linear(in_features=120, out_features=84) #second FC layer
-        self.fc3 = nn.Linear(in_features=84, out_features=num_classes) #third FC layer
+        self.fc1 = nn.Linear(in_features=256*5*5, out_features=4096) #first FC layer
+        self.fc2 = nn.Linear(in_features=4096, out_features=4096) #second FC layer
+        self.fc3 = nn.Linear(in_features=4096, out_features=num_classes) #third FC layer
 
     #forward pass of LeNet
     def forward(self, x):
-        x = F.sigmoid(self.conv1(x)) #applying activation function to output from first conv layer 
+        #conv/pool layers
+        x = F.relu(self.conv1(x)) #applying activation function to output from first conv layer 
         x = self.pool(x) #pooling layer
-        x = F.sigmoid(self.conv2(x)) #act fcn applied to output from second conv layer
+        x = F.relu(self.conv2(x)) #act fcn applied to output from second conv layer
         x = self.pool(x) #pooling layer
+        x = F.relu(self.conv3(x)) #act fcn to output of third conv layer
+        x = F.relu(self.conv4(x)) #act fcn to output of fourth conv layer
+        x = F.relu(self.conv5(x)) #act fcn to output of fifth conv layer
+        x = self.pool(x) #pooling layer
+
+        #FC layers
         x = torch.flatten(x, 1) #flattening data to input into FC layers 
-        x = F.sigmoid(self.fc1(x)) #first FC layer
-        x = F.sigmoid(self.fc2(x)) #second FC layer
-        x = self.fc3(x) #third FC layer
-        return x 
+        x = F.relu(self.fc1(x)) #act fcn on first FC layer
+        x = self.dropout(x) #applying dropout
+        x = F.relu(self.fc2(x)) #second FC layer
+        x = self.dropout(x) #applying dropout
+        x = self.fc3(x) #third FC/output layer
+        return x
 
 #sanity check
-# model = LeNet()
-# x = torch.randn(1, 1, 28, 28)
-# print(x.shape)
+# model = AlexNet()
+# x = torch.randn(1, 3, 224, 224)
 # print(model(x).shape)
+# x = model(x)
+# print(x.shape)
 # exit()
 
 #set device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #hyperparameters
-in_channels = 1 #binary images (3 if RGB)
+in_channels = 3 #binary images (3 if RGB)
 num_classes = 10
 learning_rate = 0.001 #LR used for optimizer
 batch_size = 64 #size of each batch of data to train on
 num_epochs = 5 #number epochs to train for
 
 #load data
-train_dataset = datasets.FashionMNIST(root='datasets/', train=True, transform=transforms.ToTensor(), download=True) #will download if we don't already have it
+train_dataset = datasets.Imagenette(root='datasets/', split="train", transform=transforms.ToTensor(), download=True) #will download if we don't already have it
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
-test_dataset = datasets.FashionMNIST(root='datasets/', train=False, transform=transforms.ToTensor(), download=True) #will download if we don't already have it
+test_dataset = datasets.Imagenette(root='datasets/', split="val", transform=transforms.ToTensor(), download=True) #will download if we don't already have it
 test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=True)
 
 #initialize network
-model = LeNet(in_channels=in_channels, num_classes=num_classes).to(device)
+model = AlexNet(in_channels=in_channels, num_classes=num_classes).to(device)
 
 #loss and optimizer
 criterion = nn.CrossEntropyLoss()
